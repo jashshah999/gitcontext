@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+
 import click
 
 from gitcontext.analyzer import RepoContext
@@ -22,6 +23,9 @@ Generate a CLAUDE.md that includes:
 8. Notes for contributors
 
 Be concise. No fluff. A senior engineer should be able to read this in 2 minutes and start contributing."""
+
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-20250514"
 
 
 def _build_context(ctx: RepoContext, repo_path) -> str:
@@ -58,18 +62,19 @@ def _detect_provider():
     return None
 
 
-def _call_anthropic(user_message: str) -> str:
+def _call_anthropic(user_message: str, model: str | None = None) -> str:
     try:
         import anthropic
     except ImportError:
         click.echo("Error: 'anthropic' package required. Install with: pip install 'gitcontext[deep]'", err=True)
         sys.exit(1)
 
+    model = model or DEFAULT_ANTHROPIC_MODEL
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    click.echo("Analyzing with Claude...", err=True)
+    click.echo(f"Analyzing with Claude ({model})...", err=True)
 
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=model,
         max_tokens=4096,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
@@ -77,26 +82,27 @@ def _call_anthropic(user_message: str) -> str:
     return message.content[0].text
 
 
-def _call_gemini(user_message: str) -> str:
+def _call_gemini(user_message: str, model: str | None = None) -> str:
     try:
         import google.generativeai as genai
     except ImportError:
         click.echo("Error: 'google-generativeai' package required. Install with: pip install 'gitcontext[gemini]'", err=True)
         sys.exit(1)
 
+    model_name = model or DEFAULT_GEMINI_MODEL
     api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     genai.configure(api_key=api_key)
-    click.echo("Analyzing with Gemini...", err=True)
+    click.echo(f"Analyzing with Gemini ({model_name})...", err=True)
 
-    model = genai.GenerativeModel("gemini-2.5-flash")
-    response = model.generate_content(
+    genai_model = genai.GenerativeModel(model_name)
+    response = genai_model.generate_content(
         f"{SYSTEM_PROMPT}\n\n---\n\n{user_message}",
         generation_config=genai.GenerationConfig(max_output_tokens=4096),
     )
     return response.text
 
 
-def deep_analyze(ctx: RepoContext, repo_path, provider: str | None = None) -> str:
+def deep_analyze(ctx: RepoContext, repo_path, provider: str | None = None, model: str | None = None) -> str:
     """Use LLM API to generate a rich CLAUDE.md from repo context and source files."""
     if provider is None:
         provider = _detect_provider()
@@ -108,9 +114,9 @@ def deep_analyze(ctx: RepoContext, repo_path, provider: str | None = None) -> st
     user_message = _build_context(ctx, repo_path)
 
     if provider == "anthropic":
-        return _call_anthropic(user_message)
+        return _call_anthropic(user_message, model=model)
     elif provider == "gemini":
-        return _call_gemini(user_message)
+        return _call_gemini(user_message, model=model)
     else:
         click.echo(f"Error: Unknown provider '{provider}'.", err=True)
         sys.exit(1)
