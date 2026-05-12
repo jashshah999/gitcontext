@@ -1,3 +1,7 @@
+[![PyPI version](https://img.shields.io/pypi/v/gitcontext)](https://pypi.org/project/gitcontext/)
+[![CI](https://github.com/jashshah999/gitcontext/actions/workflows/ci.yml/badge.svg)](https://github.com/jashshah999/gitcontext/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 > Your AI agent is flying blind. Fix it in one command.
 
 # gitcontext
@@ -18,6 +22,17 @@ $ gitcontext . --output CLAUDE.md
 
 <!-- TODO: Record terminal GIF showing: gitcontext run on a real repo, output streaming to terminal, ~10 seconds total -->
 <!-- Suggested tool: asciinema + svg-term for animated SVG, or vhs for GIF -->
+
+## Quick Start
+
+Run on your repo in 10 seconds:
+
+```bash
+pip install gitcontext
+gitcontext . --output CLAUDE.md
+```
+
+That's it. Commit the file and your AI agent instantly knows your stack, commands, and architecture.
 
 ## Install
 
@@ -156,6 +171,47 @@ Total context sent to the LLM is capped at ~80K characters to stay within free t
 | Output quality | High (targeted) | Raw dump | Highest | None |
 
 gitingest gives you a raw file dump to paste into an LLM. gitcontext gives you a finished, structured context doc ready to commit.
+
+## GitHub Action
+
+Keep your context doc up to date automatically. Add this to `.github/workflows/update-context.yml`:
+
+```yaml
+name: Update CLAUDE.md
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'package.json'
+      - 'Cargo.toml'
+
+jobs:
+  update-context:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jashshah999/gitcontext@main
+        with:
+          deep: false
+          output: CLAUDE.md
+          commit: true
+```
+
+For deep mode, add your API key as a repository secret and set `deep: true`:
+
+```yaml
+      - uses: jashshah999/gitcontext@main
+        with:
+          deep: true
+          output: CLAUDE.md
+          commit: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+```
+
+See [examples/workflow.yml](examples/workflow.yml) for the full example.
 
 ## Contributing
 

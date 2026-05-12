@@ -1,0 +1,20 @@
+name: Update CLAUDE.md
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'pyproject.toml'
+      - 'package.json'
+      - 'Cargo.toml'
+
+jobs:
+  update-context:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jashshah999/gitcontext@main
+        with:
+          deep: false
+          output: CLAUDE.md
+          commit: true

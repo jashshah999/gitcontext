@@ -1,12 +1,6 @@
-# gitcontext static output for huggingface/lerobot
-
-Generated with: `gitcontext /path/to/lerobot`
-
----
-
 ## Project Overview
 
-lerobot — State-of-the-art Machine Learning for Real-World Robotics in Pytorch
+lerobot — 🤗 LeRobot: State-of-the-art Machine Learning for Real-World Robotics in Pytorch
 
 ## Tech Stack
 
@@ -31,6 +25,7 @@ pre-commit run --all-files
 - **`docker/`** — Docker configuration
 - **`docs/`** — Documentation
 - **`examples/`** — Example scripts and tutorials
+- **`free-claude-code/`** — Python modules
 - **`scripts/`** — Utility and CLI scripts
 - **`src/`** — Source code
 - **`tests/`** — Test suite
@@ -53,3 +48,4 @@ CI: GitHub Actions (benchmark_tests, claude, docker_publish, documentation-uploa
 
 - Notable files: CONTRIBUTING.md, Makefile
 - Required env vars: CLOSE_ISSUE_MESSAGE, CLOSE_PR_MESSAGE, DOCKER_IMAGE_NAME, DOCKER_IMAGE_NAME_CPU, DOCKER_IMAGE_NAME_GPU
+
