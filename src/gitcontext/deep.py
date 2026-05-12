@@ -88,7 +88,7 @@ def _call_gemini(user_message: str) -> str:
     genai.configure(api_key=api_key)
     click.echo("Analyzing with Gemini...", err=True)
 
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     response = model.generate_content(
         f"{SYSTEM_PROMPT}\n\n---\n\n{user_message}",
         generation_config=genai.GenerationConfig(max_output_tokens=4096),
