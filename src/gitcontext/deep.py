@@ -1,4 +1,4 @@
-"""Deep analysis using Claude API."""
+"""Deep analysis using LLM APIs (Claude or Gemini)."""
 
 from __future__ import annotations
 
@@ -24,28 +24,11 @@ Generate a CLAUDE.md that includes:
 Be concise. No fluff. A senior engineer should be able to read this in 2 minutes and start contributing."""
 
 
-def deep_analyze(ctx: RepoContext, repo_path) -> str:
-    """Use Claude API to generate a rich CLAUDE.md from repo context and source files."""
-    try:
-        import anthropic
-    except ImportError:
-        click.echo("Error: 'anthropic' package required for --deep mode.", err=True)
-        click.echo("Install with: pip install 'gitcontext[deep]'", err=True)
-        sys.exit(1)
-
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        click.echo("Error: ANTHROPIC_API_KEY environment variable not set.", err=True)
-        sys.exit(1)
-
-    # Select important files
+def _build_context(ctx: RepoContext, repo_path) -> str:
     click.echo("Selecting key files...", err=True)
     files = select_files(repo_path)
 
-    # Build the user message
     context_parts = []
-
-    # Static analysis summary
     context_parts.append("## Static Analysis Results\n")
     context_parts.append(f"Name: {ctx.name}")
     context_parts.append(f"Description: {ctx.description}")
@@ -60,16 +43,30 @@ def deep_analyze(ctx: RepoContext, repo_path) -> str:
     context_parts.append(f"Architecture: {ctx.architecture}")
     context_parts.append(f"Notable files: {ctx.notable_files}")
 
-    # File contents
     context_parts.append("\n\n## Key Source Files\n")
     for filepath, content in files:
         context_parts.append(f"\n### {filepath}\n```\n{content}\n```\n")
 
-    user_message = "\n".join(context_parts)
+    return "\n".join(context_parts)
 
-    # Call Claude API
+
+def _detect_provider():
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    if os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"):
+        return "gemini"
+    return None
+
+
+def _call_anthropic(user_message: str) -> str:
+    try:
+        import anthropic
+    except ImportError:
+        click.echo("Error: 'anthropic' package required. Install with: pip install 'gitcontext[deep]'", err=True)
+        sys.exit(1)
+
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     click.echo("Analyzing with Claude...", err=True)
-    client = anthropic.Anthropic(api_key=api_key)
 
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -77,5 +74,43 @@ def deep_analyze(ctx: RepoContext, repo_path) -> str:
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
     )
-
     return message.content[0].text
+
+
+def _call_gemini(user_message: str) -> str:
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        click.echo("Error: 'google-generativeai' package required. Install with: pip install 'gitcontext[gemini]'", err=True)
+        sys.exit(1)
+
+    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    genai.configure(api_key=api_key)
+    click.echo("Analyzing with Gemini...", err=True)
+
+    model = genai.GenerativeModel("gemini-2.0-flash")
+    response = model.generate_content(
+        f"{SYSTEM_PROMPT}\n\n---\n\n{user_message}",
+        generation_config=genai.GenerationConfig(max_output_tokens=4096),
+    )
+    return response.text
+
+
+def deep_analyze(ctx: RepoContext, repo_path, provider: str | None = None) -> str:
+    """Use LLM API to generate a rich CLAUDE.md from repo context and source files."""
+    if provider is None:
+        provider = _detect_provider()
+
+    if provider is None:
+        click.echo("Error: No API key found. Set ANTHROPIC_API_KEY or GEMINI_API_KEY.", err=True)
+        sys.exit(1)
+
+    user_message = _build_context(ctx, repo_path)
+
+    if provider == "anthropic":
+        return _call_anthropic(user_message)
+    elif provider == "gemini":
+        return _call_gemini(user_message)
+    else:
+        click.echo(f"Error: Unknown provider '{provider}'.", err=True)
+        sys.exit(1)
