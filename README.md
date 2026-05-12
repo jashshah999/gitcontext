@@ -28,6 +28,21 @@ gitcontext . --format agents
 gitcontext . --verbose
 ```
 
+## Deep Mode (Claude-powered)
+
+For richer, more insightful output, use `--deep` which sends key source files to Claude for analysis:
+
+```bash
+# Requires ANTHROPIC_API_KEY env var
+pip install '.[deep]'
+export ANTHROPIC_API_KEY=sk-ant-...
+
+gitcontext . --deep
+gitcontext . --deep --output CLAUDE.md
+```
+
+Deep mode reads the top ~15-20 most important files and uses Claude to generate a comprehensive CLAUDE.md with architecture explanations, conventions, gotchas, and contributor notes.
+
 ## What it detects
 
 - Languages and their proportions

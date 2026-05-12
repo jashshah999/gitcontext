@@ -17,7 +17,8 @@ from gitcontext.github import cleanup_clone, clone_repo, is_github_url
 @click.option("--output", "-o", default=None, help="Write to file (default: stdout)")
 @click.option("--format", "fmt", type=click.Choice(["claude", "agents"]), default="claude", help="Output format")
 @click.option("--verbose", "-v", is_flag=True, help="Show detection details")
-def main(target: str, output: str | None, fmt: str, verbose: bool) -> None:
+@click.option("--deep", is_flag=True, help="Use Claude API for rich analysis (requires ANTHROPIC_API_KEY)")
+def main(target: str, output: str | None, fmt: str, verbose: bool, deep: bool) -> None:
     """Generate AI context docs (CLAUDE.md / AGENTS.md) for a codebase.
 
     TARGET can be a local path or a GitHub URL.
@@ -48,7 +49,11 @@ def main(target: str, output: str | None, fmt: str, verbose: bool) -> None:
             click.echo(f"CI: {ctx.ci.provider}", err=True)
             click.echo("---", err=True)
 
-        if fmt == "agents":
+        if deep:
+            from gitcontext.deep import deep_analyze
+
+            content = deep_analyze(ctx, repo_path)
+        elif fmt == "agents":
             content = generate_agents_md(ctx)
         else:
             content = generate_claude_md(ctx)

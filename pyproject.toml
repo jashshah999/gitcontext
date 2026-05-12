@@ -11,6 +11,9 @@ license = "MIT"
 requires-python = ">=3.10"
 dependencies = ["click", "pyyaml", "tomli; python_version < '3.11'"]
 
+[project.optional-dependencies]
+deep = ["anthropic>=0.40"]
+
 [project.scripts]
 gitcontext = "gitcontext.cli:main"
 
