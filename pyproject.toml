@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "gitcontext"
+name = "gitcontext-ai"
 version = "0.1.0"
 description = "Auto-generate AI context docs (CLAUDE.md / AGENTS.md) for any codebase"
 readme = "README.md"
