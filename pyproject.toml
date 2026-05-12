@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gitcontext"
+version = "0.1.0"
+description = "Auto-generate AI context docs (CLAUDE.md / AGENTS.md) for any codebase"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = ["click", "pyyaml", "tomli; python_version < '3.11'"]
+
+[project.scripts]
+gitcontext = "gitcontext.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gitcontext"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
